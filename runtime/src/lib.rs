@@ -273,6 +273,14 @@ impl pallet_sudo::Config for Runtime {
 // 	type RuntimeEvent = RuntimeEvent;
 // 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 // }
+//
+
+impl pallet_kitties::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Randomness = RandomnessModule;
+}
+
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -286,6 +294,8 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		// TemplateModule: pallet_template,
+		RandomnessModule: pallet_insecure_randomness_collective_flip,
+		Kitties: pallet_kitties,
 	}
 );
 
