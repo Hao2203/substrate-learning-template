@@ -44,17 +44,32 @@ fn it_works_for_breed() {
 		let _ = Balances::deposit_creating(&account_id_2, 1000);
 
 		assert_noop!(
-			KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id_1, kitty_id_1),
+			KittiesModule::breed(
+				RuntimeOrigin::signed(account_id),
+				kitty_id_1,
+				kitty_id_1,
+				*b"abceabcd"
+			),
 			Error::<Test>::SameKittyId
 		);
 		assert_noop!(
-			KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id_1, kitty_id_2),
+			KittiesModule::breed(
+				RuntimeOrigin::signed(account_id),
+				kitty_id_1,
+				kitty_id_2,
+				*b"abceabcd"
+			),
 			Error::<Test>::InvalidKittyId
 		);
 		assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
 		assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id_2)));
 
-		assert_ok!(KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id_1, kitty_id_2));
+		assert_ok!(KittiesModule::breed(
+			RuntimeOrigin::signed(account_id),
+			kitty_id_1,
+			kitty_id_2,
+			*b"abceabcd"
+		));
 		System::assert_last_event(
 			Event::KittyBred {
 				who: account_id,

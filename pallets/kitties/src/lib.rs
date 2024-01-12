@@ -11,6 +11,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod migrations;
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 pub mod weights;
@@ -26,6 +27,7 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
+	use migrations::v1::migrate;
 	use sp_runtime::traits::AccountIdConversion;
 
 	pub type KittyId = u32;
@@ -33,9 +35,16 @@ pub mod pallet {
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-	pub struct Kitty(pub [u8; 16]);
+	// pub struct Kitty(pub [u8; 16]);
+	pub struct Kitty {
+		pub dna: [u8; 16],
+		pub name: [u8; 8],
+	}
+
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -98,6 +107,15 @@ pub mod pallet {
 		NotOnSale,
 	}
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			let weight = migrate::<T>();
+			STORAGE_VERSION.put::<Pallet<T>>();
+			weight
+		}
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
@@ -106,7 +124,8 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			let kitty_id = Self::get_next_id()?;
-			let kitty = Kitty(Self::random_value(&who));
+			// let kitty = Kitty(Self::random_value(&who));
+			let kitty = Kitty { dna: Self::random_value(&who), name: [0; 8] };
 
 			let price = T::KittyPrice::get();
 			// T::Currency::reserve(&who, price)?;
@@ -131,6 +150,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			kitty_id_1: KittyId,
 			kitty_id_2: KittyId,
+			name: [u8; 8],
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(kitty_id_1 != kitty_id_2, Error::<T>::SameKittyId);
@@ -145,9 +165,9 @@ pub mod pallet {
 			let selected = Self::random_value(&who);
 			let mut dna = [0u8; 16];
 			for i in 0..dna.len() {
-				dna[i] = (kitty_1.0[i] & selected[i]) | (kitty_2.0[i] & !selected[i]);
+				dna[i] = (kitty_1.dna[i] & selected[i]) | (kitty_2.dna[i] & !selected[i]);
 			}
-			let kitty = Kitty(dna);
+			let kitty = Kitty { dna, name };
 
 			let price = T::KittyPrice::get();
 			// T::Currency::reserve(&who, price)?;
