@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use frame_support::PalletId;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -275,9 +276,17 @@ impl pallet_sudo::Config for Runtime {
 // }
 //
 
+parameter_types! {
+	pub MyPalletId: PalletId = PalletId(*b"my_kitty");
+	pub KittyPrice: Balance = EXISTENTIAL_DEPOSIT * 10;
+}
+
 impl pallet_kitties::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessModule;
+	type Currency = Balances;
+	type KittyPrice = KittyPrice;
+	type PalletId = MyPalletId;
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}

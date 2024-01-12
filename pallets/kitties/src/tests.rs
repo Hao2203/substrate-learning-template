@@ -1,11 +1,12 @@
 use crate::{mock::*, Error, Event};
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, traits::Currency};
 
 #[test]
 fn it_works_for_created() {
 	new_test_ext().execute_with(|| {
 		let kitty_id = 0;
 		let account_id = 1;
+		let _ = Balances::deposit_creating(&account_id, 1000);
 
 		assert_eq!(KittiesModule::next_kitty_id(), kitty_id);
 		assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
@@ -39,6 +40,8 @@ fn it_works_for_breed() {
 		let account_id = 1;
 		let account_id_2 = 2;
 		let kitty_id_3 = 2;
+		let _ = Balances::deposit_creating(&account_id, 1000);
+		let _ = Balances::deposit_creating(&account_id_2, 1000);
 
 		assert_noop!(
 			KittiesModule::breed(RuntimeOrigin::signed(account_id), kitty_id_1, kitty_id_1),
@@ -72,6 +75,8 @@ fn it_works_for_transfer() {
 		let kitty_id = 0;
 		let account_id = 1;
 		let account_id_2 = 2;
+		let _ = Balances::deposit_creating(&account_id, 1000);
+		let _ = Balances::deposit_creating(&account_id_2, 1000);
 		assert_ok!(KittiesModule::create(RuntimeOrigin::signed(account_id)));
 		assert_ok!(KittiesModule::transfer(
 			RuntimeOrigin::signed(account_id),
@@ -89,4 +94,37 @@ fn it_works_for_transfer() {
 		));
 		assert_eq!(KittiesModule::kitty_owner(kitty_id), Some(account_id));
 	});
+}
+
+#[test]
+fn it_works_for_sale() {
+	new_test_ext().execute_with(|| {
+		let kitty_id = 0;
+		let account_id = 1;
+		let _ = Balances::deposit_creating(&account_id, 1000);
+		let origin = RuntimeOrigin::signed(account_id);
+		let origin2 = RuntimeOrigin::signed(2);
+		assert_noop!(KittiesModule::sale(origin.clone(), kitty_id), Error::<Test>::InvalidKittyId);
+		assert_ok!(KittiesModule::create(origin.clone()));
+		assert_noop!(KittiesModule::sale(origin2, kitty_id), Error::<Test>::NotOwner);
+		assert_ok!(KittiesModule::sale(origin.clone(), kitty_id));
+		assert_noop!(KittiesModule::sale(origin.clone(), kitty_id), Error::<Test>::AlreadyOnSale);
+	})
+}
+
+#[test]
+fn it_works_for_buy() {
+	new_test_ext().execute_with(|| {
+		let kitty_id = 0;
+		let _ = Balances::deposit_creating(&1, 1000);
+		let _ = Balances::deposit_creating(&2, 1000);
+		let origin = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
+		assert_noop!(KittiesModule::buy(origin.clone(), kitty_id), Error::<Test>::InvalidKittyId);
+		assert_ok!(KittiesModule::create(origin.clone()));
+		assert_noop!(KittiesModule::buy(origin2.clone(), kitty_id), Error::<Test>::NotOnSale);
+		assert_ok!(KittiesModule::sale(origin.clone(), kitty_id));
+		assert_noop!(KittiesModule::buy(origin.clone(), kitty_id), Error::<Test>::AlreadyOnSale);
+		assert_ok!(KittiesModule::buy(origin2, kitty_id));
+	})
 }

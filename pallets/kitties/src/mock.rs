@@ -1,6 +1,9 @@
 use crate as pallet_kitties;
-use frame_support::traits::{ConstU16, ConstU64};
-use sp_core::H256;
+use frame_support::{
+	traits::{ConstU16, ConstU64},
+	PalletId,
+};
+use sp_core::{Get, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage,
@@ -15,6 +18,7 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		KittiesModule: pallet_kitties,
 		Randomness: pallet_insecure_randomness_collective_flip,
+		Balances: pallet_balances,
 	}
 );
 
@@ -35,7 +39,7 @@ impl frame_system::Config for Test {
 	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -44,9 +48,36 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+impl pallet_balances::Config for Test {
+	type Balance = u64;
+	type DustRemoval = ();
+	type RuntimeEvent = RuntimeEvent;
+	type ExistentialDeposit = ConstU64<1>;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type RuntimeHoldReason = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type MaxFreezes = ();
+}
+
+pub struct MyPalletId;
+
+impl Get<PalletId> for MyPalletId {
+	fn get() -> PalletId {
+		PalletId(*b"My Kitty")
+	}
+}
+
 impl pallet_kitties::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = Randomness;
+	type Currency = Balances;
+	type KittyPrice = ConstU64<100>;
+	type PalletId = MyPalletId;
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Test {}
