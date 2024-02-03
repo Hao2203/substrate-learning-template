@@ -4,6 +4,8 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
+pub use weights::WeightInfo;
+mod weights;
 
 #[cfg(test)]
 mod mock;
@@ -31,6 +33,7 @@ pub mod pallet {
 		/// The maximum length of claims that can be added
 		#[pallet::constant]
 		type MaxClaimLength: Get<u32>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]

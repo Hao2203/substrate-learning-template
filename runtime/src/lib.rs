@@ -362,6 +362,11 @@ impl pallet_kitties::Config for Runtime {
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
+impl pallet_poe::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MaxClaimLength = ConstU32<64>;
+	type WeightInfo = ();
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime {
@@ -377,6 +382,7 @@ construct_runtime!(
 		RandomnessModule: pallet_insecure_randomness_collective_flip,
 		Kitties: pallet_kitties,
 		// Ocw: pallet_ocw,
+		Poe: pallet_poe,
 	}
 );
 
@@ -425,6 +431,7 @@ mod benches {
 		[pallet_timestamp, Timestamp]
 		[pallet_sudo, Sudo]
 		// [pallet_template, TemplateModule]
+		[pallet_poe, Poe]
 	);
 }
 

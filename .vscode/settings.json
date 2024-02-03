@@ -1,0 +1,6 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./pallets/poe/Cargo.toml"
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
+}
